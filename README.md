@@ -1,61 +1,52 @@
 # DataShop Retail Data Warehouse & ETL Pipeline
 
-![Data Warehouse Star Schema Diagram]
-
 ## 🎯 Objetivo del Proyecto
-[cite_start]Este proyecto desarrolla una **solución integral de Business Intelligence (BI)** para la empresa ficticia DataShop[cite: 13]. [cite_start]El objetivo principal es modelar, transformar y almacenar datos de ventas para permitir análisis informados y la toma de decisiones[cite: 7].
-
----
+Este proyecto académico implementa una **solución integral de Business Intelligence (BI)** para la empresa ficticia DataShop (venta de electrodomésticos). El objetivo principal es modelar, transformar y almacenar datos de ventas para análisis avanzados en Power BI.
 
 ## 🏗️ Arquitectura y Modelado (Esquema Estrella)
 
-La solución implementa una arquitectura de Data Warehouse (DW) con un **Esquema Estrella** en SQL Server.
-
-### Componentes Clave
-| Tipo | Tabla | Claves Únicas | Atributos Clave |
-| :--- | :--- | :--- | :--- |
-| **Hechos** | `dw.Fact_Ventas` | FechaClave, SurrogateKeys | Cantidad, PrecioVenta, **ImporteTotal (Calculado)** |
-| **Dimensión** | `dw.Dim_Cliente` | SurrogateKey_Cliente, CodCliente | RazonSocial, Mail, Dirección |
-| **Dimensión** | `dw.Dim_Producto` | SurrogateKey_Producto, CodigoProducto | Descripción, Categoría, Marca |
-| **Dimensión** | `dw.Dim_Tienda` | SurrogateKey_Tienda, CodigoTienda | Localidad, Provincia, TipoTienda |
-| **Dimensión** | `dw.Dim_Tiempo` | Tiempo_Key (YYYYMMDD) | Año, Mes, Trimestre |
+La solución utiliza una arquitectura de Data Warehouse (DW) con un **Esquema Estrella** implementado en SQL Server.
 
 ### Flujo ETL
-El proceso de carga se divide en dos fases orquestadas por Python:
+El proceso de carga de datos sigue un flujo orquestado por Python:
+1.  **Extracción/Carga (EL):** Scripts de Python (`pandas`) leen archivos `.csv` de origen y cargan los datos en tablas de **Staging** (`stg`).
+2.  **Transformación y Carga (T/L):** Un script de orquestación en Python llama al Stored Procedure principal, que aplica la lógica de negocio (`MERGE`, generación de claves sustitutas) y mueve los datos a las tablas finales del DW (`dw`).
 
-1.  **Extracción/Carga (EL):** Scripts de Python leen archivos `.csv` (origen) y cargan los datos crudos en tablas de **Staging** (`stg`).
-2.  **Transformación y Carga Final (T/L):** Un procedimiento almacenado de SQL aplica la lógica de negocio (`MERGE`), genera las claves subrogadas (`Surrogate Keys`), y mueve los datos limpios a las tablas finales del DW (`dw`).
+### Modelo de Datos (DW Final)
+| Tipo | Tabla | Clave Natural (Ejemplo) | Clave Sustituta (PK) |
+| :--- | :--- | :--- | :--- |
+| **Hechos** | `Fact_Ventas` | FechaClave, CodCliente... | PK compuesta |
+| **Dimensión** | `Dim_Cliente` | CodCliente | SurrogateKey_Cliente |
+| **Dimensión** | `Dim_Producto` | CodigoProducto | SurrogateKey_Producto |
+| **Dimensión** | `Dim_Tienda` | CodigoTienda | SurrogateKey_Tienda |
+| **Dimensión** | `Dim_Tiempo` | Fecha | Tiempo_Key |
 
 ## 🛠️ Tecnologías
-* **Base de Datos:** SQL Server (Gestión de DW y Stored Procedures).
+* **Base de Datos:** SQL Server (Gestión de DW, Tablas, Stored Procedures).
 * **Lenguaje:** Python 3.x
-* **Librerías Python:** `pandas` (Extracción de CSVs), `sqlalchemy` y `pyodbc` (Conexión a SQL).
-* **Visualización:** Power BI (Reportes analíticos avanzados).
+* **Librerías Python:** `pandas`, `sqlalchemy`, `pyodbc`.
+* **Visualización:** Power BI (Tablero Analítico con DAX y Formato Condicional).
 
----
+## 🚀 Cómo Ejecutar el Proyecto (Instrucciones de Setup)
 
-## 🚀 Cómo Ejecutar el Proyecto (Configuración)
+### 1. Configuración de SQL Server
+1.  Asegúrese de tener el servidor activo (ej: `.\SQLEXPRESS`).
+2.  Ejecute el script **`script_creacion_dw.sql`** en SSMS. Este script crea la base de datos (DW), las tablas Stage y DW, la lógica de `Dim_Tiempo`, y todos los Stored Procedures.
 
-### Requisitos
-1.  Instancia de SQL Server (ej: `.\SQLEXPRESS`).
-2.  Driver ODBC 17 for SQL Server instalado.
-3.  Python y dependencias (`pip install pandas sqlalchemy pyodbc`).
+### 2. Ejecución del ETL (Python)
+Abra la terminal en la carpeta que contiene los scripts y archivos `.csv` de origen.
 
-### Pasos de Ejecución
-1.  **Configurar la Base de Datos:** Ejecute el script **`script_creacion_dw.sql`** en SQL Server Management Studio (SSMS). Este script crea las tablas, los esquemas y los procedimientos almacenados (incluyendo la lógica de `Dim_Tiempo`).
-2.  **Carga de Datos Inicial (Stage):** Ejecute el script de extracción.
+1.  **Instalar dependencias:** `pip install pandas sqlalchemy pyodbc`
+2.  **Carga a Staging:** Ejecute el script que carga los CSVs a SQL Stage.
     ```bash
     python cargar_csv_a_stage.py
     ```
-3.  **Ejecución del ETL Completo (T/L):** Ejecute el script orquestador para llenar las Dimensiones y Hechos, y ejecutar las transformaciones.
+3.  **Transformar y Cargar (Final):** Ejecute el script orquestador para llenar las Dimensiones y la Tabla de Hechos.
     ```bash
     python ejecutar_etl_completo.py
     ```
 
 ## 📊 Resultado Final: Dashboard Power BI
-
-[cite_start]El tablero final contiene un análisis completo de las ventas, cumpliendo con los siguientes requisitos[cite: 91, 92, 94]:
-
-* [cite_start]**KPIs:** Importe Total de Ventas [cite: 93][cite_start], Cantidad de Ventas realizadas[cite: 94], Precio Promedio.
-* [cite_start]**Análisis Temporal:** Gráfico de Barras que muestra las Ventas por Año y por Mes[cite: 96, 97].
-* [cite_start]**Análisis Comparativo (Avanzado):** Matriz que utiliza medidas DAX y formato condicional (semáforo) para mostrar el % de Variación de Ventas mes a mes[cite: 137, 140].
+El tablero generado incluye 4 páginas de análisis para la toma de decisiones, destacando:
+* **Análisis Comparativo Avanzado:** Matriz con cálculo de `% de Variación sobre el mes anterior` y formato condicional (semáforo).
+* **Cumplimiento:** Todas las métricas y visualizaciones requeridas en el temario (KPIs, Gráficos de Tiempo, Top Clientes).
