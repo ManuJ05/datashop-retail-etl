@@ -1,0 +1,5 @@
+# Archivos de Datos Grandes y Temporales
+*.csv
+*.xlsx
+__pycache__/
+*.bak 
